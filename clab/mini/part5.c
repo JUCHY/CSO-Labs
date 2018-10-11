@@ -35,10 +35,11 @@ extern void free_node(struct list_node *node);
 void
 list_insert(struct list_node *head, int value)
 {
-	assert(head != NULL);
+	struct list_node *newnode = alloc_node();
+	newnode->value = value;
+	newnode->next = head->next;
+	head->next = newnode;
 
-	// TODO: Your code here.
-	assert(0);
 }
 
 // Return a pointer to the last node in a linked list, starting
@@ -60,11 +61,12 @@ list_insert(struct list_node *head, int value)
 struct list_node *
 list_end(struct list_node *head)
 {
-	assert(head != NULL);
-
+	struct list_node *lastnode = head;
+	while(lastnode->next!= NULL){
+		lastnode = lastnode->next;
+	}
 	// TODO: Your code here.
-	assert(0);
-	return NULL;
+	return lastnode;
 }
 
 // Return the number of nodes in a linked list, starting from the
@@ -88,9 +90,15 @@ list_size(struct list_node *head)
 {
 	assert(head != NULL);
 
+	int len = 1;
+
+	struct list_node *lastnode = head;
+	while(lastnode->next!= NULL){
+		lastnode = lastnode->next;
+		len++;
+	}
 	// TODO: Your code here.
-	assert(0);
-	return 0;
+	return len;
 }
 
 // Return a pointer to the first node in the given linked list
@@ -117,11 +125,26 @@ list_size(struct list_node *head)
 struct list_node *
 list_find(struct list_node *head, int value, struct list_node **predp)
 {
-	assert(head != NULL);
-	assert(predp != NULL);
+	struct list_node *returnnode = head;
+	if (returnnode->value== value)
+	{
+		*predp = NULL;
+		return returnnode;
+	
+		/* code */
+	}
+	while(returnnode->next!= NULL){
+		if(returnnode->next->value == value){
+			*predp = returnnode;
+			return returnnode->next;
+		}
+		returnnode = returnnode->next;
+		
+	}
+
+	*predp = NULL;
 
 	// TODO: Your code here.
-	assert(0);
 	return NULL;
 }
 
@@ -174,11 +197,25 @@ list_find(struct list_node *head, int value, struct list_node **predp)
 // head node is removed.
 int
 list_remove(struct list_node **headp, int value)
+
 {
 	assert(headp != NULL);
 	assert(*headp != NULL);
+	struct list_node *predp = alloc_node();
+	predp->next = NULL;
+	struct list_node *node2remove = list_find(*headp, value, &predp);
+	if(node2remove!= NULL){
+		predp -> next = node2remove->next;
+		free_node(node2remove);
+		if( *headp == NULL){
+			printf("%d\n", (*headp)->value);
+			*headp = predp;
+		}
+		return 1;
+	}
+	else{
+		return 0;
+	}
 
-	// TODO: Your code here.
-	assert(0);
-	return 0;
+
 }

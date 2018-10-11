@@ -7,8 +7,10 @@
 void
 initialize_array(int *arr, int n)
 {
+	for(int i = 0; i < n; i++){
+			arr[i] = 1;
+	}
 	// TODO: Your code here.
-	assert(0);
 }
 
 // mark_multiples is given an array "arr" of size n and a (prime) number "p" less than "n" 
@@ -18,8 +20,12 @@ initialize_array(int *arr, int n)
 void
 mark_multiples(int *arr, int n, int p) 
 {
+	int num = (n/p)-1;
+	while(num>1){
+		arr[num*p] = 0;
+		num--;
+	}
 	// TODO: Your code here.
-	assert(0);
 }
 
 // prime_number_sieves finds all prime numbers less than n by constructing a "sieve of Eratosthenes"
@@ -36,8 +42,12 @@ mark_multiples(int *arr, int n, int p)
 void
 prime_number_sieves(int *arr, int n)
 {
+	initialize_array(arr, n);
+	for(int i = 2; i < n/2; i++){
+		mark_multiples(arr, n, i);
+	}
+	
 	// TODO: Your code here
-	assert(0);
 }
 
 /* find_smallest_divisor finds the smallest prime divisor (>1) of "n". It assigns the value 
@@ -55,8 +65,23 @@ prime_number_sieves(int *arr, int n)
 int
 find_smallest_divisor(int n, int *divisor)
 {
+	int myarray[n];
+	for(int i = 0; i < n; i++){
+		myarray[i] = 0;
+	}
+	int composite = 0;
+	prime_number_sieves(myarray, n);
+	for(int i = n-1; i > 2; i--){
+		if(myarray[i] == 1){
+			if(n%i == 0){
+				*divisor = i;
+				composite = 1;
+
+			}
+		}
+	}
+	return composite;
 	// TODO: Your code here
-	assert(0);
 }
 
 

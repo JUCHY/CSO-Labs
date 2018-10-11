@@ -10,9 +10,10 @@ swap(int *p1, int *p2)
 {
 	assert(p1 != 0);
 	assert(p2 != 0);
-
+	int temp = *p1;
+	*p1 = *p2;
+	*p2 = temp;
 	// TODO: Your code here.
-	assert(0);
 }
 
 // bubble_sort implements the bubble sort algorithm.
@@ -24,6 +25,18 @@ swap(int *p1, int *p2)
 void
 bubble_sort(int *arr, int n)
 {
+	int isswapped = 1;
+	while(isswapped == 1){
+		isswapped = 0;
+		for(int i = 0; i < n-1; i++){
+			if(arr[i] > arr[i+1]){
+				swap(&arr[i], &arr[i+1]);
+				isswapped = 1;
+			}
+
+		}
+
+
+	} 
         // TODO: Your code here.
-        assert(0);
 }

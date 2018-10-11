@@ -51,6 +51,62 @@
 char *
 string_token(char *str, char delim, char **saveptr)
 {
+
+	int i = 0;
+	if(str){
+
+		while(1){
+		if(str[i] == delim){
+			str[i] = '\0';
+			*saveptr = &str[i+1];
+			while(str[i+1] == delim){
+				i++;
+				char* newchar = &str[i+1];
+				*saveptr = newchar;
+			}
+			if((*saveptr)[0] == '\0'){
+				*saveptr = NULL;
+			}
+			return str;
+		}
+		if(str[i] == '\0'){
+			return str;
+		}
+		i++;
+	}
+	}
+	if(*saveptr){
+		while(1){
+		if((*saveptr)[i] == delim){
+			(*saveptr)[i] = '\0';
+			char* pointreturn = *saveptr;
+			*saveptr = &pointreturn[i+1];
+			while(*saveptr[0] == delim){
+				i++;
+				char* newchar = &(pointreturn[i+1]);
+				*saveptr = newchar;
+			}
+			if((*saveptr)[0] == '\0'){
+				*saveptr = NULL;
+			}
+			
+			return pointreturn;
+		}
+		if((*saveptr)[i] == '\0'){
+			char* pointreturn = *saveptr;	
+			*saveptr = NULL;
+			return pointreturn;
+		}
+		i++;
+	}
+
+	}
+
+
+	return NULL;
+	
+	
+	
 	//TODO: Your code here
 }
 

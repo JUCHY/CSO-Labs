@@ -6,8 +6,12 @@
 unsigned char
 get_exponent_field(float f) 
 {
-	//TODO: Your code here.
-	assert(0);
+unsigned int *num1 = (int *)&f;
+*num1 = (*num1) << 1;
+
+unsigned char *num = (unsigned char*) num1;
+return num[3];
+
 }
 
 //clear the most significant b bits of unsigned integer number
@@ -19,8 +23,11 @@ get_exponent_field(float f)
 unsigned int
 clear_msb(unsigned int number, int b)
 {
-	//TODO: Your code here
-	assert(0);
+	int num = number;
+	for(int i = 1; i<=b; i++){
+		num = num & ~(1<<(32-i));
+	}
+	return num;
 }
 
 //given an array of bytes whose length is array_size (bytes), treat it as a bitmap (i.e. an array of bits),
@@ -38,6 +45,17 @@ clear_msb(unsigned int number, int b)
 unsigned char
 bit_at_index(unsigned char *array, int array_size, int i)
 {
+	if(i<array_size*8){
+		int index = (i)/8;
+		unsigned char x = array[index];
+		x = x & (1 << (7 - (i - (8*index))));
+		if(x){
+			return 1;
+		}
+		return 0;
+
+	}
+	
 	//TODO: Your code here
-	assert(0);
+	
 }
