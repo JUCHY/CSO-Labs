@@ -91,6 +91,7 @@ bloom_bit_at_pos(bloom_filter *bf, int pos)
 	int which_byte = pos / 8;
 	// which_bit maps "pos" position of the bitmap to the bit position in f->buf[which_byte]
 	int which_bit = pos % 8;
+	int mask = 0x1 << (7-which_bit);
 	// extract the bit at the which_bit position of the byte (f->buf[which_byte])
-	return (bf->buf[which_byte] << which_bit) >> (7-which_bit);
+	return bf->buf[which_byte] & mask;
 }
