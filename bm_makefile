@@ -10,4 +10,4 @@ bmgrep_test: bmgrep_test.o bmgrep.o bmgrep.h
 	gcc $(CFLAGS) -DANSWER=$(ANSWER) -c ${<}
 
 clean :
-	rm -f *.o bmgrep_test
+	rm -f bmgrep.o bmgrep_test.o bmgrep_test
