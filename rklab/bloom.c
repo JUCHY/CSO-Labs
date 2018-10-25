@@ -56,6 +56,15 @@ void
 bloom_add(bloom_filter *bf,
 	long long elm /* the element to be added (a RK hash value) */)
 {
+	for(int i = 0; i < BLOOM_HASH_NUM; i++){
+
+	int num1 = hash_i(i, elm) % bf->bsz;
+	int bit_index = num1/8;
+	int bit_offset = num1 % 8;
+	bf->buf[bit_index] |=  0x1 << (7- bit_offset);
+}
+
+
 	/* Your code here */
 }
 
@@ -69,7 +78,21 @@ bloom_query(bloom_filter *f,
 	long long elm /* the query element (a RK hash value) */ )
 {
 	/* Your code here */
-	return false;
+	for(int i = 0; i < BLOOM_HASH_NUM; i++){
+
+	int num1 = hash_i(i, elm) % f->bsz;
+	int bit_index = num1 /8;
+	int bit_offset = num1 % 8;
+	printf("test\n");
+	printf("%d - %d", bit_index, bit_offset );
+	int mask = 1 << (7- bit_offset);
+	if((f->buf[bit_index] & mask )== false){
+
+		return false;
+
+	}
+}
+	return true;
 }
 
 void 
@@ -91,6 +114,7 @@ bloom_bit_at_pos(bloom_filter *bf, int pos)
 	int which_byte = pos / 8;
 	// which_bit maps "pos" position of the bitmap to the bit position in f->buf[which_byte]
 	int which_bit = pos % 8;
+	int mask = 0x1 << (7-which_bit);
 	// extract the bit at the which_bit position of the byte (f->buf[which_byte])
-	return (bf->buf[which_byte] << which_bit) >> (7-which_bit);
+	return bf->buf[which_byte] & mask;
 }

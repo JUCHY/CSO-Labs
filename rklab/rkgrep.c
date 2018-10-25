@@ -49,7 +49,36 @@ int
 naive_substring_match(const char *pattern, const char *doc, int *first_match_ind)
 {
 	/* Your code here */
-	return -1;
+	int i = 0;
+	int count = 0;
+	int match = 0;
+	int first_index = 0;
+
+	while(doc[i]!= '\0' ){
+		int x = 0;
+		while(pattern[x] != '\0' ){
+			if(pattern[x]== doc[i+x]){
+				match = 1;
+			}
+			else{
+				match = 0;
+				break;
+			}
+			x++;
+		}
+		if(match == 1){
+			if(first_index== 0){
+				first_index = 1;
+				*first_match_ind = i;
+			}
+			count++;
+		}
+		match = 0;
+		i++;
+
+	}
+		
+	return count;
 }
 
 /* initialize the Rabin-karp hash computation by calculating 
@@ -61,9 +90,37 @@ naive_substring_match(const char *pattern, const char *doc, int *first_match_ind
  * should use the provided functions mmul, madd, msub.
  * (We use "long long" to represent an RK hash)
  */
+
+long long
+pow2(long long num, int pow){
+	if(pow == 0){
+		return 1;
+	}
+	if(pow == 1){
+		return num;
+	}
+	long long num2 = num;
+	for(int i = 1; i < pow; i++){
+		num2 = mmul(num2,num);
+	}
+
+	return num2;
+}
 long long
 rkhash_init(const char *charbuf, int m, long long *h)
 {
+	long long d = 256;
+	long long d2 = 1;
+	long long p = 0;
+	for(int i = 0; i < m; i++){
+		d2 = pow2(d, m-1-i);
+		long long num = mmul(d2,charbuf[i]);
+		p = madd(p,num);
+	}
+	d2 = pow2(d, m);	
+	*h = d2;
+	return p;
+
 	/* Your code here */
 }
 
@@ -76,6 +133,11 @@ rkhash_init(const char *charbuf, int m, long long *h)
 long long 
 rkhash_next(long long curr_hash, long long h, char leftmost, char rightmost)
 {
+	long long num = mmul(256, curr_hash);
+	long long num2 = mmul(leftmost, h);
+	num = msub(num,num2);
+	num = madd(num, rightmost);
+	return num;
 	/* Your code here */
 }
 
@@ -87,12 +149,60 @@ rkhash_next(long long curr_hash, long long h, char leftmost, char rightmost)
  * Note: You should implement the Rabin-Karp algorithm by completing the 
  * rkhash_init and rkhash_next functions and then use them here.
 */
+
+int
+check(char *pattern1, char *pattern2, int m){
+	for(int i = 0; i < m; i ++){
+		if(pattern1[i] != pattern2[i]){
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
 int
 rk_substring_match(const char *pattern, const char *doc, int *first_match_ind)
 {
-	
-    /* Your code here */
-	return 0;
+
+	int n = strlen(doc);
+	int m = strlen(pattern);
+	long long h = 0;
+	long long h2 = 0;
+	long long pat1 = rkhash_init(pattern, m, &h);
+	long long pat2 = rkhash_init(doc, m, &h2);
+	int count = 0;
+	int hasindex = 0;
+	for (int i = 0; i <= n - m; i++) 
+    { 
+    	
+    
+        if ( pat1 == pat2 ) 
+        { 
+        	int match = 1;
+        	for (int j = 0; j < m; j++) 
+            { 
+                if(doc[i+j]!= pattern[j]){
+                	match = 0;
+                	break;
+
+                }
+            } 
+            if(match){
+	        	if(!hasindex){
+	        		hasindex = 1;
+	        		*first_match_ind = i;
+	        	}
+	        	count = count +1;  
+	        }
+        	  
+
+        } 
+  
+        pat2 = rkhash_next(pat2,h,  doc[i], doc[i+m]); 
+ 
+    } 
+    return count;
 }
 
 
@@ -105,7 +215,24 @@ bloom_filter *
 rk_create_doc_bloom(int m, const char *doc, int bloom_size)
 {
 	/* Your code here */
-	return NULL;
+	
+
+	int n = strlen(doc);
+	bloom_filter *bf = bloom_init(bloom_size);
+	long long h = 0;
+	long long elm = rkhash_init(doc, m, &h);
+	for(int i = 0; i <=n-m; i++){
+		bloom_add( bf, elm);
+		elm = rkhash_next(elm, h, doc[i], doc[i+m]);
+	}
+
+
+	return bf;
+	
+
+
+
+
 }
 
 /* rk_substring_match_using_bloom returns the total number of positions where "pattern" 
@@ -118,5 +245,16 @@ int
 rk_substring_match_using_bloom(const char *pattern, const char *doc, bloom_filter *bf, int *first_match_ind)
 {
     /* Your code here */
-    return 0;
+    int m = strlen(pattern);
+	long long h = 0;
+    long long check = rkhash_init(pattern, m, &h);
+    if(bloom_query(bf, check)){
+
+    	return rk_substring_match(pattern, doc,first_match_ind);
+
+    }
+    else{
+
+    	return 0;
+    }
 }
