@@ -4,8 +4,16 @@
 //the signature is not void ex2()
   
 #include <assert.h>
-
+//rdi, rsi, rdx, rcx
 void
-ex2() {
+ex2(int a, int b, unsigned long c) {
 	assert(0);
+	int count = 0; //eax
+	int edx = 0;
+	while(c != 0){
+		if(long long cl !=)
+		c = edx;
+		int cx = a + c;
+	}
+
 }

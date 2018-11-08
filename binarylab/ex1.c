@@ -5,7 +5,10 @@
   
 #include <assert.h>
 
-void
-ex1() {
-	assert(0);
+int
+ex1(int a, int b, int c) {
+	if((a+b) != c){
+		return 0;
+	}
+	return 1;
 }
