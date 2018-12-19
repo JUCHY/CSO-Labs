@@ -159,13 +159,12 @@ int
 htable_insert(htable *ht, char *key, void *val) {
 	//printf("checkprerewlock\n");
 	rwl_rlock(&l, NULL);
-	
+	rwl_runlock(&l);
 	int hcode = hashcode(key);	
 	//this key/value tuple corresponds to slot "slot"
     int slot = hcode % ht->size;
 	//traverse linked list at slot "slot", insert the new node at the end 
 	node *prev = NULL;
-
 	pthread_mutex_lock(&mu[slot]);
 	node *curr = ht->store[slot];
 	pthread_mutex_unlock(&mu[slot]);
@@ -194,7 +193,6 @@ htable_insert(htable *ht, char *key, void *val) {
 	}
 
 	pthread_mutex_unlock(&mu[slot]);
-	rwl_runlock(&l);
 	if (ht->allow_resize && collision >= MAX_COLLISION) {
 		pthread_mutex_lock(&mu[slot]);
 		htable_resize(ht);
@@ -208,22 +206,21 @@ htable_insert(htable *ht, char *key, void *val) {
 void *
 htable_lookup(htable *ht, char *key) {
 	rwl_rlock(&l, NULL);
+	rwl_runlock(&l);
 	int hcode = hashcode(key);
     int slot = hcode % ht->size;
    	pthread_mutex_lock(&mu[slot]);
 	node *curr = ht->store[slot];
 	pthread_mutex_unlock(&mu[slot]);
+	pthread_mutex_lock(&mu[slot]);
 	while (curr) {
-		pthread_mutex_lock(&mu[slot]);
 		if ((curr->hashcode == hcode) && (strcmp(curr->key, key) == 0)) {
 			node* retval = curr -> val;
 			pthread_mutex_unlock(&mu[slot]);
-			rwl_runlock(&l);
 			return retval;
 		}
 		curr = curr->next;
-		pthread_mutex_unlock(&mu[slot]);
 	}
-	rwl_runlock(&l);
+	pthread_mutex_unlock(&mu[slot]);
 	return NULL;
 }
