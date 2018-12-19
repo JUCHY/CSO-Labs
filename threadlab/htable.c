@@ -8,6 +8,9 @@
 #include "htable.h"
 
 #define MAX_COLLISION 10
+
+pthread_mutex_t	*mu = NULL;
+rwl l;
 /* htable implements a hash table that handles collisions by chaining.
  * It contains an array, where each slot stores the head of a singly-linked list.
  * if the length of some chain is found to be longer than MAX_COLLISION after an insertion, the 
@@ -73,7 +76,14 @@ get_prime(int min) {
 void
 htable_init(htable *ht, int sz, int allow_resize) {
 	//initialize hash table with a prime larger than sz entries
+	
 	ht->size = get_prime(sz + 1);
+	int total = ht->size;
+	mu = malloc(sizeof(pthread_mutex_t)*total);
+	for(int i = 0; i < total; i++){
+		pthread_mutex_init(&mu[i], NULL);
+	}
+	rwl_init(&l);
 	ht->store = (node **)malloc(sizeof(node *)*ht->size);
 	ht->allow_resize = allow_resize;
 	assert(ht->store);
@@ -109,11 +119,18 @@ htable_destroy(htable *ht) {
 static void
 htable_resize(htable *ht) {
 	//double the array size
+	rwl_wlock(&l, NULL);
 	int new_size = get_prime(2*ht->size);
+	pthread_mutex_t * mu2 = malloc(sizeof(pthread_mutex_t)*new_size);
+	int total = ht->size;
+	for(int i = 0; i < new_size; i++){
+		pthread_mutex_init(&mu2[i], NULL);
+	}
+	free(mu);
+	mu = mu2;
 	node **new_store = (node **)malloc(sizeof(node *)*new_size);
 	assert(new_store != NULL);
 	bzero(new_store, sizeof(node *)*new_size);
-
 	for (int i = 0; i < ht->size; i++) {
 		node *curr = ht->store[i];
 		while (curr) {
@@ -132,7 +149,7 @@ htable_resize(htable *ht) {
 	ht->size = new_size;
 	free(ht->store);
 	ht->store = new_store;
-
+	rwl_wunlock(&l);
 }
 
 
@@ -140,38 +157,49 @@ htable_resize(htable *ht) {
 //exists, it returns 1 indicating failure.  Otherwise, it inserts the new val and returns 0. 
 int
 htable_insert(htable *ht, char *key, void *val) {
-
+	//printf("checkprerewlock\n");
+	rwl_rlock(&l, NULL);
+	
 	int hcode = hashcode(key);	
 	//this key/value tuple corresponds to slot "slot"
-       	int slot = hcode % ht->size;
+    int slot = hcode % ht->size;
 	//traverse linked list at slot "slot", insert the new node at the end 
-	node *prev = NULL; 
+	node *prev = NULL;
+
+	pthread_mutex_lock(&mu[slot]);
 	node *curr = ht->store[slot];
+	pthread_mutex_unlock(&mu[slot]);
 	int collision = 0;
+	pthread_mutex_lock(&mu[slot]);
 	while (curr) {
-		if ((curr->hashcode == hcode ) && (strcmp(curr->key, key) == 0)) {
+		if ((curr->hashcode == hcode) && (strcmp(curr->key, key) == 0)) {
+			pthread_mutex_unlock(&mu[slot]);
+			//rwl_runlock(&l);
 			return 1; //found an existing key/value tupe with the same key
 		}
 		prev = curr;
 		curr = curr->next;
 		collision++;
 	}
-
 	//allocate a node to store key/value tuple
 	node *n = (node *)malloc(sizeof(node));
 	n->hashcode = hcode;
 	n->key = key;
 	n->val = val;
 	n->next = NULL;
-
 	if (prev == NULL) {
 		ht->store[slot] = n;
 	}else {
 		prev->next = n;
 	}
+
+	pthread_mutex_unlock(&mu[slot]);
+	rwl_runlock(&l);
 	if (ht->allow_resize && collision >= MAX_COLLISION) {
+		pthread_mutex_lock(&mu[slot]);
 		htable_resize(ht);
-	}
+		pthread_mutex_unlock(&mu[slot]);
+	}	
 	return 0; //success
 }
 
@@ -179,14 +207,23 @@ htable_insert(htable *ht, char *key, void *val) {
 //otherwise it returns NULL.
 void *
 htable_lookup(htable *ht, char *key) {
+	rwl_rlock(&l, NULL);
 	int hcode = hashcode(key);
-       	int slot = hcode % ht->size;
+    int slot = hcode % ht->size;
+   	pthread_mutex_lock(&mu[slot]);
 	node *curr = ht->store[slot];
+	pthread_mutex_unlock(&mu[slot]);
 	while (curr) {
+		pthread_mutex_lock(&mu[slot]);
 		if ((curr->hashcode == hcode) && (strcmp(curr->key, key) == 0)) {
-			return curr->val;
+			node* retval = curr -> val;
+			pthread_mutex_unlock(&mu[slot]);
+			rwl_runlock(&l);
+			return retval;
 		}
 		curr = curr->next;
+		pthread_mutex_unlock(&mu[slot]);
 	}
+	rwl_runlock(&l);
 	return NULL;
 }

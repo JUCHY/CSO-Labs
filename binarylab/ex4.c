@@ -4,8 +4,22 @@
 //the signature is not void ex4()
   
 #include <assert.h>
+//rdi, rsi, rdx, rcx
+long
+ex4(long a) {
+	if(a >1){
+		
+		a = a -1;
+		int x = ex4(a);
+		a = a -1;
+		int  y = ex4(a);
+		y = x+ y;
+		return  y;
 
-void
-ex4() {
-	assert(0);
+		
+	}
+	else{
+		return a;
+	}
+
 }

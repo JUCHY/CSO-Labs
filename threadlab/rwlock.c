@@ -31,6 +31,12 @@ cond_timedwait(pthread_cond_t *c, pthread_mutex_t *m, const struct timespec *exp
 void
 rwl_init(rwl *l)
 {
+	l->n_waiting_readers= 0;
+	l->n_waiting_writers = 0;
+	l->n_writers = 0;
+	l->n_readers = 0;
+	pthread_mutex_init(&(l->mu),NULL);
+	pthread_cond_init(&(l->cond),NULL);
 	//Your code here
 }
 
@@ -40,7 +46,7 @@ int
 rwl_nwaiters(rwl *l) 
 {
 	//Your code here
-	return 0;
+	return l->n_waiting_readers+l->n_waiting_writers;
 
 }
 
@@ -50,6 +56,21 @@ rwl_nwaiters(rwl *l)
 int
 rwl_rlock(rwl *l, const struct timespec *expire)
 {
+	pthread_mutex_lock(&(l->mu));
+	l->n_waiting_readers++;
+	//if(l->n_waiting_writers>0){
+	//	pthread_cond_signal()
+	//}
+	while(l->n_writers>0 || l->n_waiting_writers>0){
+		if(cond_timedwait(&l->cond,&(l->mu), expire)==ETIMEDOUT){
+			l->n_waiting_readers--;
+			pthread_mutex_unlock(&(l->mu));
+			return ETIMEDOUT;
+		}
+	}
+	l->n_waiting_readers--;
+	l->n_readers++;
+	pthread_mutex_unlock(&(l->mu));
 	//Your code here
 	return 0;
 }
@@ -58,6 +79,12 @@ rwl_rlock(rwl *l, const struct timespec *expire)
 void
 rwl_runlock(rwl *l)
 {
+	pthread_mutex_lock(&(l->mu));
+	l->n_readers--;
+	if(l->n_waiting_writers>0){
+		pthread_cond_signal(&l->cond);
+	}
+	pthread_mutex_unlock(&(l->mu));
 	//Your code here
 }
 
@@ -67,6 +94,19 @@ rwl_runlock(rwl *l)
 int
 rwl_wlock(rwl *l, const struct timespec *expire)
 {
+	pthread_mutex_lock(&(l->mu));
+	l->n_waiting_writers++;
+	while(l->n_writers>0 ||l->n_readers>0){
+		if(cond_timedwait(&l->cond,&(l->mu), expire)==ETIMEDOUT){
+			l->n_waiting_writers--;
+			pthread_mutex_unlock(&(l->mu));
+			return ETIMEDOUT;
+		}
+
+	}
+	l->n_waiting_writers--;
+	l->n_writers++;
+	pthread_mutex_unlock(&(l->mu));
 	//Your code here
 	return 0;
 }
@@ -75,5 +115,10 @@ rwl_wlock(rwl *l, const struct timespec *expire)
 void
 rwl_wunlock(rwl *l)
 {
+	pthread_mutex_lock(&(l->mu));
+	l->n_writers--;
+	pthread_cond_broadcast(&(l->cond));
+	pthread_mutex_unlock(&(l->mu));
+
 	//Your code here
 }

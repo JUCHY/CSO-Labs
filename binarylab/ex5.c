@@ -7,7 +7,19 @@
 #include <assert.h>
 #include "ex5.h"
 
-void
+int
 ex5(node *n) {
-	assert(0);
+	if(n == '\0'){
+		return 1;
+	}
+
+	while((n->next)!= 0){
+		node* next = n->next;
+		long val = n->value;
+		n = next;
+		if((next->value)<val){
+			return 0;
+		}
+	}
+	return 1;
 }

@@ -2,6 +2,12 @@
 #define RWLOCK_H
 
 typedef struct {
+	int n_waiting_readers;	
+	int n_waiting_writers;	
+	int n_writers;	
+	int n_readers;	
+	pthread_mutex_t	mu;	
+	pthread_cond_t cond;	
 	//Your code here
 }rwl;
 

@@ -5,14 +5,18 @@
   
 #include <assert.h>
 //rdi, rsi, rdx, rcx
-void
-ex3(int rdi, int rsi, int rdx, int rcx) {
-	int cnt = 0;
-	while(){
-		if(rdx <rcx){
-			cnt = rcx;
-		}
+char *
+ex3(char* arr1, char* arr2, int n) {
+	int count = 0;
+	for(int i = 0;i < n; i++){
+		count = i;
+		char x = arr1[i];
+		char y = arr2[i];
+		arr1[i] = y;
+		arr2[i] = x;
 
 	}
+
+	return arr2 + count;
 
 }
